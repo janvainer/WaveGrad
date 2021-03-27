@@ -31,14 +31,7 @@ def run_training(rank, config, args):
     model = WaveGrad(config).cuda()
     show_message(f'Number of WaveGrad parameters: {model.nparams}', verbose=args.verbose, rank=rank)
     mel_fn = MelSpectrogramFixed(
-        sample_rate=config.data_config.sample_rate,
-        n_fft=config.data_config.n_fft,
-        win_length=config.data_config.win_length,
-        hop_length=config.data_config.hop_length,
-        f_min=config.data_config.f_min,
-        f_max=config.data_config.f_max,
-        n_mels=config.data_config.n_mels,
-        window_fn=torch.hann_window
+        **config.data_config
     ).cuda()
 
     show_message('Initializing optimizer, scheduler and losses...', verbose=args.verbose, rank=rank)
