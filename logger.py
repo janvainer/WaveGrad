@@ -14,6 +14,7 @@ class Logger(object):
         self.continue_training = config.training_config.continue_training
         self.logdir = config.training_config.logdir
         self.sample_rate = config.data_config.sample_rate
+        self.lates_checkpoint_path = None
 
         if self.rank == 0:
             if not self.continue_training and os.path.exists(self.logdir):
@@ -25,7 +26,7 @@ class Logger(object):
                 os.makedirs(self.logdir)
             self.summary_writer = SummaryWriter(config.training_config.logdir)
             self.save_model_config(config)
-        
+
     def _log_losses(self, iteration, loss_stats: dict):
         for key, value in loss_stats.items():
             self.summary_writer.add_scalar(key, value, iteration)
@@ -47,7 +48,7 @@ class Logger(object):
             f'Iteration: {iteration} | Losses: {[value for value in stats.values()]}',
             verbose=verbose
         )
-    
+
     def log_audios(self, iteration, audios: dict):
         if self.rank != 0: return
         for key, audio in audios.items():
@@ -62,7 +63,7 @@ class Logger(object):
         if self.rank != 0: return
         with open(f'{self.logdir}/config.json', 'w') as f:
             json.dump(config.to_dict_type(), f)
-    
+
     def save_checkpoint(self, iteration, model, optimizer=None):
         if self.rank != 0: return
         d = {}
@@ -72,6 +73,12 @@ class Logger(object):
             d['optimizer'] = optimizer.state_dict()
         filename = f'{self.summary_writer.log_dir}/checkpoint_{iteration}.pt'
         torch.save(d, filename)
+
+        # remove previous checkpoint after saving the new one
+        # will not be executed if the previous saving fails
+        if self.latest_checkpoint_path is not None:
+            os.remove(self.latest_checkpoint_path)
+        self.latest_checkpoint_path = filename
 
     def load_latest_checkpoint(self, model, optimizer=None):
         if not self.continue_training:

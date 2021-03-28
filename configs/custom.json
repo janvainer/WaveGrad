@@ -28,7 +28,7 @@
     },
     "training_config": {
         "logdir": "logs/custom",
-        "continue_training": false,
+        "continue_training": true,
         "train_filelist_path": "filelists/train.txt",
         "test_filelist_path": "filelists/test.txt",
         "batch_size": 64,
